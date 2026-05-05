@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Compiler – Natural Language → Working App</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Compiler</h1>
+            <p>Natural language → structured config → validated → executable app</p>
+        </header>
+
+        <div class="input-section">
+            <label for="prompt">Describe the application you want to build:</label>
+            <textarea id="prompt" rows="5" placeholder="Example: Build a CRM with login, contacts, dashboard, role-based access, and premium plan with payments. Admins can see analytics."></textarea>
+            <button id="generateBtn" class="btn-primary">🚀 Generate</button>
+        </div>
+
+        <div class="output-section" id="outputSection" style="display: none;">
+            <h2>Generated Configuration</h2>
+            <pre id="jsonOutput"></pre>
+            <button id="downloadBtn" class="btn-secondary">📦 Download Working App (ZIP)</button>
+        </div>
+
+        <div class="error-section" id="errorSection" style="display: none;">
+            <p class="error-msg"></p>
+            <button id="clarifyBtn">📝 Clarify</button>
+        </div>
+    </div>
+
+    <script>
+        const generateBtn = document.getElementById('generateBtn');
+        const promptInput = document.getElementById('prompt');
+        const outputSection = document.getElementById('outputSection');
+        const errorSection = document.getElementById('errorSection');
+        const jsonOutput = document.getElementById('jsonOutput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorMsg = document.querySelector('.error-msg');
+        const clarifyBtn = document.getElementById('clarifyBtn');
+
+        let lastValidPrompt = '';  // store the prompt that generated the config
+
+        generateBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                showError('Please enter a prompt.');
+                return;
+            }
+
+            // Reset UI
+            outputSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ Generating...';
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Check if the system needs clarification
+                    if (data.status === 'needs_clarification') {
+                        showError(`Clarification needed: ${data.questions.join(', ')}`);
+                        clarifyBtn.onclick = () => {
+                            // In a real implementation, you'd show a modal or extra fields
+                            alert('Please add more details to your prompt, e.g., entities, roles.');
+                        };
+                        return;
+                    }
+
+                    // Success
+                    lastValidPrompt = prompt;
+                    jsonOutput.textContent = JSON.stringify(data, null, 2);
+                    outputSection.style.display = 'block';
+                } else {
+                    showError(`Server error: ${data.detail || 'Unknown error'}`);
+                }
+            } catch (err) {
+                showError(`Network error: ${err.message}`);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🚀 Generate';
+            }
+        });
+
+        downloadBtn.addEventListener('click', async () => {
+            if (!lastValidPrompt) {
+                alert('No valid configuration to download. Generate first.');
+                return;
+            }
+            window.location.href = `/download?prompt=${encodeURIComponent(lastValidPrompt)}`;
+        });
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorSection.style.display = 'block';
+            outputSection.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

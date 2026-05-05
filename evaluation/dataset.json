@@ -1,0 +1,4 @@
+[
+  {"id": 1, "prompt": "Build a CRM with login, contacts, dashboard", "expected_entities": ["User","Contact"]},
+  {"id": 2, "prompt": "Make an app", "expected_error": "vague"},
+]
