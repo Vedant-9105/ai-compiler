@@ -1,15 +1,39 @@
 import openai
+import os
 import json
-import time
+from dotenv import load_dotenv
 
-client = openai.OpenAI()
+load_dotenv()
 
-def call_llm(prompt: str, temperature: float = 0.0, max_tokens: int = 2000):
+client = openai.OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+
+def call_llm(
+    prompt: str,
+    temperature: float = 0.0,
+    max_tokens: int = 2000
+):
+
     response = client.chat.completions.create(
-        model="gpt-4o-mini",  # or gpt-3.5-turbo for lower cost
-        messages=[{"role": "user", "content": prompt}],
+        model="gpt-4o-mini",
+
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+
         temperature=temperature,
         max_tokens=max_tokens,
-        response_format={"type": "json_object"}  # enforces JSON
+
+        response_format={
+            "type": "json_object"
+        }
     )
-    return response.choices[0].message.content
+
+    # Convert JSON string -> Python dict
+    return json.loads(
+        response.choices[0].message.content
+    )

@@ -1,5 +1,4 @@
 from .utils import call_llm
-import json
 
 INTENT_PROMPT = """
 Extract the following from the user request as JSON:
@@ -15,5 +14,10 @@ User request: {prompt}
 
 def extract_intent(user_prompt: str) -> dict:
     prompt = INTENT_PROMPT.format(prompt=user_prompt)
-    result = call_llm(prompt, temperature=0)
-    return json.loads(result)
+
+    result = call_llm(
+        prompt,
+        temperature=0
+    )
+
+    return result
